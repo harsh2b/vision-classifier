@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionChunk AI — Multimodal Video Classifier & Policy Router</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Ambient background glow effect -->
+  <div class="ambient-glow glow-cyan"></div>
+  <div class="ambient-glow glow-purple"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            VisionChunk <span class="badge-tag">Task 1</span>
+          </div>
+          <div class="brand-subtitle">Gated-Attention Multimodal Video Classifier & Chunking Router</div>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <div class="pill-badge pill-offline">
+          <span class="status-dot dot-green"></span>
+          <span>100% Offline / Local</span>
+        </div>
+        <div class="pill-badge pill-metric">
+          <span class="metric-label">Model Size:</span>
+          <span class="metric-val">392 KB (100K Params)</span>
+        </div>
+        <div class="pill-badge pill-metric">
+          <span class="metric-label">Benchmark F1:</span>
+          <span class="metric-val" id="headerF1">0.6314</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Left Column: Input Selection & Video Player -->
+    <section class="panel input-panel">
+      <!-- Input Mode Tabs -->
+      <div class="tabs-header">
+        <button class="tab-btn active" id="tabSamplesBtn" onclick="switchInputTab('samples')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+            <line x1="7" y1="2" x2="7" y2="22"></line>
+            <line x1="17" y1="2" x2="17" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <line x1="2" y1="7" x2="7" y2="7"></line>
+            <line x1="2" y1="17" x2="7" y2="17"></line>
+            <line x1="17" y1="17" x2="22" y2="17"></line>
+            <line x1="17" y1="7" x2="22" y2="7"></line>
+          </svg>
+          Sample Videos (70 Available)
+        </button>
+        <button class="tab-btn" id="tabUploadBtn" onclick="switchInputTab('upload')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Upload Your Video
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Sample Video Picker -->
+      <div class="tab-content" id="samplesTabContent">
+        <div class="filter-bar">
+          <label class="filter-label" for="categoryFilter">Category Filter:</label>
+          <select id="categoryFilter" onchange="filterSamples()">
+            <option value="ALL">All Categories (70 videos)</option>
+            <option value="Sports_HighMotion">Sports & Motion (13)</option>
+            <option value="Gameplay_Esports">Gameplay & Esports (1)</option>
+            <option value="Podcast_TalkingHead">Podcast & News (9)</option>
+            <option value="Wildlife_Nature">Wildlife & Nature (11)</option>
+            <option value="LifeRecord_Egocentric">Life Record / Egocentric (19)</option>
+            <option value="Performance_Narrative">Performance & Shows (17)</option>
+          </select>
+        </div>
+
+        <div class="samples-scroll-list" id="samplesList">
+          <div class="loading-spinner">Loading sample video corpus...</div>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: File Upload Area -->
+      <div class="tab-content" id="uploadTabContent" style="display: none;">
+        <div class="upload-dropzone" id="dropzone" onclick="document.getElementById('videoFileInput').click()">
+          <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" style="display: none;" onchange="handleFileSelect(event)">
+          <div class="upload-icon">
+            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <div class="upload-title">Drop your video here or click to browse</div>
+          <div class="upload-subtitle">Supports MP4, WebM, MOV (Processed 100% locally on your machine)</div>
+          <button type="button" class="btn btn-secondary upload-btn">Select Video File</button>
+        </div>
+        <div id="uploadFileInfo" class="upload-file-info" style="display: none;"></div>
+      </div>
+
+      <!-- Video Player Card -->
+      <div class="player-card">
+        <div class="player-header">
+          <span class="player-title" id="activeVideoTitle">Select a video above to test</span>
+          <span class="player-meta" id="activeVideoMeta">Ready</span>
+        </div>
+        <div class="video-wrapper">
+          <video id="mainVideoPlayer" controls preload="metadata">
+            <p>Your browser does not support HTML5 video.</p>
+          </video>
+          <div id="videoPlaceholder" class="video-placeholder">
+            <div class="placeholder-icon">🎬</div>
+            <div>Choose any sample video or upload a clip</div>
+          </div>
+        </div>
+        <button id="classifyBtn" class="btn btn-primary run-inference-btn" onclick="runInference()" disabled>
+          <span class="btn-spinner" id="btnSpinner" style="display: none;"></span>
+          <svg class="play-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="classifyBtnText">Classify Video & Verify Correctness</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Column: Verification & Predictions Dashboard -->
+    <section class="panel results-panel">
+      <!-- Ground Truth & Correctness Verification Banner -->
+      <div class="verification-banner" id="verificationBanner">
+        <div class="verdict-icon-box" id="verdictIcon">🔍</div>
+        <div class="verdict-content">
+          <div class="verdict-heading" id="verdictHeading">Awaiting Model Prediction</div>
+          <div class="verdict-detail" id="verdictDetail">
+            Select a sample or upload a video and click "Classify Video" to inspect prediction accuracy.
+          </div>
+        </div>
+        <div class="verdict-tag" id="verdictTag">STANDBY</div>
+      </div>
+
+      <!-- Human Verification & Feedback Widget -->
+      <div class="card feedback-card" id="feedbackCard">
+        <div class="feedback-title">
+          <span>Human Verification Feedback</span>
+          <span class="feedback-counter" id="feedbackCounter">Session Accuracy: --% (0 verified)</span>
+        </div>
+        <p class="feedback-desc">Do you agree with this model prediction? Your feedback tests reliability in real-time:</p>
+        <div class="feedback-actions">
+          <button class="feedback-btn btn-agree" id="btnAgree" onclick="submitFeedback('correct')">
+            <span class="feedback-emoji">👍</span> Yes, Correct Prediction
+          </button>
+          <button class="feedback-btn btn-disagree" id="btnDisagree" onclick="openDisagreeModal()">
+            <span class="feedback-emoji">👎</span> No, Incorrect
+          </button>
+        </div>
+        <div id="disagreePicker" class="disagree-picker" style="display: none;">
+          <label>What should the correct category be?</label>
+          <div class="disagree-row">
+            <select id="userCorrectCategorySelect">
+              <option value="Sports_HighMotion">Sports & High-Motion</option>
+              <option value="Gameplay_Esports">Gameplay & Esports</option>
+              <option value="Podcast_TalkingHead">Podcast & Talking Head</option>
+              <option value="Wildlife_Nature">Wildlife & Nature</option>
+              <option value="LifeRecord_Egocentric">Life Record / Egocentric</option>
+              <option value="Performance_Narrative">Performance & Narrative</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="confirmIncorrectFeedback()">Submit Correction</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Primary Prediction Card -->
+      <div class="card prediction-card">
+        <div class="prediction-header">
+          <span class="card-label">Predicted Category</span>
+          <div class="latency-pill" id="latencyBadge">⚡ Latency: -- ms</div>
+        </div>
+        
+        <div class="prediction-main">
+          <div class="prediction-category" id="predCategoryDisplay">—</div>
+          <div class="confidence-container">
+            <div class="confidence-circle" id="confidenceCircle">
+              <span class="confidence-val" id="predConfidenceDisplay">--%</span>
+              <span class="confidence-sub">Confidence</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="uncertainty-status" id="uncertaintyStatus">
+          <span class="status-indicator"></span>
+          <span id="uncertaintyText">Standby</span>
+        </div>
+      </div>
+
+      <!-- Recommended Chunking Strategy Card -->
+      <div class="card chunking-card">
+        <div class="chunking-header">
+          <div class="chunking-title-group">
+            <span class="card-label">Recommended Chunking Policy</span>
+            <div class="chunking-name" id="chunkingStrategyDisplay">—</div>
+          </div>
+          <span class="policy-badge" id="policyBadge">Target: Video Index</span>
+        </div>
+
+        <div class="chunking-details">
+          <div class="detail-item">
+            <span class="detail-label">Trigger Rule:</span>
+            <span class="detail-val" id="chunkingTriggerDisplay">—</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Strategic Rationale:</span>
+            <span class="detail-val rationale" id="chunkingRationaleDisplay">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Probability Distribution Card -->
+      <div class="card probabilities-card">
+        <div class="prob-header">
+          <span class="card-label">Calibrated Probability Distribution</span>
+          <span class="temp-label">Temperature: 1.0 (Calibrated)</span>
+        </div>
+        <div class="prob-bars-list" id="probBarsList">
+          <!-- Populated dynamically via JS -->
+          <div class="prob-empty">Run prediction to view probabilities.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Section: Keyframe Sequence & Gated Attention Heatmap -->
+  <section class="keyframes-section">
+    <div class="keyframes-header">
+      <div class="keyframes-title-group">
+        <h2>Sparse Keyframes & Gated Temporal Attention</h2>
+        <p>The vision backbone samples 8 keyframes across the timeline. Gated Attention weights quantify which moments drove the classification decision.</p>
+      </div>
+      <div class="keyframe-legend">
+        <span class="legend-chip high-attn"><span class="chip-color"></span> High Attention (Decisive)</span>
+        <span class="legend-chip normal-attn"><span class="chip-color"></span> Background</span>
+      </div>
+    </div>
+
+    <div class="keyframes-grid" id="keyframesGrid">
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 1</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 2</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 3</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 4</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 5</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 6</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 7</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+      <div class="keyframe-card placeholder-frame">
+        <div class="frame-thumb placeholder-thumb">Frame 8</div>
+        <div class="frame-info"><span>Waiting...</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <span>VisionChunk Task 1 Video Classifier</span>
+      <span>•</span>
+      <span>Architecture: MobileNetV3-Small + Gated Attention MIL (100,360 parameters)</span>
+      <span>•</span>
+      <span>Trained on Video-MME Benchmark</span>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

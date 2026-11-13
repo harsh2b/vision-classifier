@@ -4,10 +4,10 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 [![Tests Passing](https://img.shields.io/badge/pytest-5%20passed-brightgreen.svg)](tests/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-success.svg)](https://harsh2b.github.io/video-classifier.html)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-success.svg)](https://harsh2b.github.io/vision-classifier/)
 
 > **Author**: Harsh Kumar Bhojak  
-> **Live Web Demonstration**: [https://harsh2b.github.io/video-classifier.html](https://harsh2b.github.io/video-classifier.html)  
+> **Live Web Demonstration**: [https://harsh2b.github.io/vision-classifier/](https://harsh2b.github.io/vision-classifier/)  
 > **Interactive Walkthrough Notebook**: [`notebooks/walkthrough.ipynb`](notebooks/walkthrough.ipynb)  
 > **Verification Test Suite**: `pytest tests -v` (5/5 passing)
 
@@ -50,7 +50,7 @@ Anyone can clone and run the model in under 60 seconds on standard CPU hardware:
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/harsh2b/problem-1-1-video-classifier.git
+git clone https://github.com/harsh2b/vision-classifier.git
 cd problem-1-1-video-classifier
 
 # 2. Create and activate virtual environment
